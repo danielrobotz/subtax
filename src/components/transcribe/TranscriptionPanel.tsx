@@ -6,15 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Mic, Edit, Check, Loader2 } from 'lucide-react';
-import { transcribeAudio } from '@/lib/whisper';
+import { Mic, Edit, Check, Loader2, Sparkles } from 'lucide-react';
+import { transcribeAudio, getMockTranscription } from '@/lib/whisper';
 
 export function TranscriptionPanel() {
   const {
     currentProject,
     setTranscription,
-    updateWord,
     isTranscribing,
     setIsTranscribing,
   } = useProjectStore();
@@ -36,7 +34,7 @@ export function TranscriptionPanel() {
       setTranscription(transcription);
     } catch (error) {
       console.error('Transcription error:', error);
-      alert('Failed to transcribe audio. Please check your OpenAI API key.');
+      alert(error instanceof Error ? error.message : 'Failed to transcribe audio.');
     } finally {
       setIsTranscribing(false);
     }
@@ -111,6 +109,19 @@ export function TranscriptionPanel() {
               <p className="text-sm text-muted-foreground mt-2">
                 Upload audio first to transcribe
               </p>
+            )}
+            {currentProject.audioUrl && (
+              <div className="mt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setTranscription(getMockTranscription())}
+                  disabled={isTranscribing}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Try with sample transcription
+                </Button>
+              </div>
             )}
           </div>
         ) : isEditing ? (

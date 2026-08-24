@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Project, Transcription, SubtitleStyle, AnimationStyle, BackgroundConfig, AudioConfig, ExportSettings } from '@/types';
+import { Project, Transcription, SubtitleStyle, AnimationStyle, BackgroundConfig, AudioConfig } from '@/types';
 
 interface ProjectState {
   currentProject: Project | null;
