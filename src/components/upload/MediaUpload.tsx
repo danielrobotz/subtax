@@ -5,12 +5,11 @@ import { useProjectStore } from '@/store/projectStore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Upload, Video, Music, FileVideo, FileAudio } from 'lucide-react';
+import { Upload, Video, Music } from 'lucide-react';
 
 export function MediaUpload() {
   const { createProject, setMedia, setIsUploading, isUploading } = useProjectStore();
   const [dragActive, setDragActive] = useState(false);
-  const [uploadType, setUploadType] = useState<'video' | 'audio' | null>(null);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -22,6 +21,33 @@ export function MediaUpload() {
     }
   }, []);
 
+  const handleFile = useCallback(async (file: File) => {
+    setIsUploading(true);
+
+    try {
+      // Create object URL for the file
+      const url = URL.createObjectURL(file);
+      const isVideo = file.type.startsWith('video/');
+      const isAudio = file.type.startsWith('audio/');
+
+      if (!isVideo && !isAudio) {
+        alert('Please upload a video or audio file');
+        return;
+      }
+
+      // Create project
+      createProject(file.name);
+
+      // Set media
+      setMedia(url, isVideo ? 'video' : 'audio');
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload file');
+    } finally {
+      setIsUploading(false);
+    }
+  }, [createProject, setIsUploading, setMedia]);
+
   const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -31,45 +57,12 @@ export function MediaUpload() {
     if (files?.[0]) {
       await handleFile(files[0]);
     }
-  }, []);
+  }, [handleFile]);
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files?.[0]) {
       await handleFile(files[0]);
-    }
-  };
-
-  const handleFile = async (file: File) => {
-    setIsUploading(true);
-    
-    try {
-      // Create object URL for the file
-      const url = URL.createObjectURL(file);
-      const isVideo = file.type.startsWith('video/');
-      const isAudio = file.type.startsWith('audio/');
-      
-      if (!isVideo && !isAudio) {
-        alert('Please upload a video or audio file');
-        return;
-      }
-
-      // Create project
-      const project = createProject(file.name);
-      
-      // Set media
-      if (isVideo) {
-        setMedia(url, 'video');
-        setUploadType('video');
-      } else {
-        setMedia(url, 'audio');
-        setUploadType('audio');
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('Failed to upload file');
-    } finally {
-      setIsUploading(false);
     }
   };
 

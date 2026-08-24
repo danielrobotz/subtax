@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build output (not part of default ignores since distDir was customized)
+    "dist/**",
+    // Vendored ffmpeg.wasm core, copied by scripts/copy-ffmpeg-core.mjs
+    "public/ffmpeg/**",
   ]),
 ]);
 

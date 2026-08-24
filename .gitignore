@@ -19,6 +19,10 @@
 
 # production
 /build
+/dist
+
+# ffmpeg.wasm core, copied from node_modules by scripts/copy-ffmpeg-core.mjs
+/public/ffmpeg
 
 # misc
 .DS_Store
@@ -32,6 +36,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel

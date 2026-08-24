@@ -7,8 +7,8 @@ import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Palette, Type, Layout } from 'lucide-react';
-import { AnimationStyle } from '@/types';
+import { Palette } from 'lucide-react';
+import { AnimationStyle, SubtitleStyle } from '@/types';
 
 const animationOptions: { value: AnimationStyle; label: string; description: string }[] = [
   { value: 'word-pop', label: 'Word Pop', description: 'Words pop in as spoken' },
@@ -173,7 +173,7 @@ export function StyleEditor() {
               <Label>Position</Label>
               <Select
                 value={style.position}
-                onValueChange={(value: any) => setSubtitleStyle({ position: value })}
+                onValueChange={(value: SubtitleStyle['position'] | null) => value && setSubtitleStyle({ position: value })}
               >
                 <SelectTrigger>
                   <SelectValue />

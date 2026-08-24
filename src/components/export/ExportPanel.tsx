@@ -9,6 +9,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import { Download, Film, Loader2 } from 'lucide-react';
 import { ExportSettings } from '@/types';
+import { exportVideo, ExportProgress } from '@/lib/videoExport';
+
+const PHASE_LABEL: Record<ExportProgress['phase'], string> = {
+  loading: 'Loading video encoder…',
+  rendering: 'Rendering subtitle frames…',
+  encoding: 'Encoding video…',
+  done: 'Done',
+};
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 export function ExportPanel() {
   const { currentProject, isExporting, exportProgress, setIsExporting, setExportProgress } = useProjectStore();
@@ -18,6 +37,7 @@ export function ExportPanel() {
     format: 'mp4',
     quality: 'high',
   });
+  const [phaseLabel, setPhaseLabel] = useState('');
 
   const handleExport = async () => {
     if (!currentProject) return;
@@ -26,24 +46,19 @@ export function ExportPanel() {
     setExportProgress(0);
 
     try {
-      // Simulate export progress
-      for (let i = 0; i <= 100; i += 10) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setExportProgress(i);
-      }
+      const blob = await exportVideo(currentProject, settings, ({ phase, progress }) => {
+        setPhaseLabel(PHASE_LABEL[phase]);
+        setExportProgress(Math.round(progress * 100));
+      });
 
-      // In a real implementation, this would:
-      // 1. Use FFmpeg.wasm to render the video with subtitles
-      // 2. Apply the selected settings
-      // 3. Generate the output file
-      // 4. Provide a download link
-
-      alert('Export complete! (Demo mode - actual video rendering would happen here)');
+      downloadBlob(blob, `${currentProject.title || 'subtax-export'}.mp4`);
     } catch (error) {
       console.error('Export error:', error);
-      alert('Export failed');
+      alert(error instanceof Error ? error.message : 'Export failed');
     } finally {
       setIsExporting(false);
+      setExportProgress(0);
+      setPhaseLabel('');
     }
   };
 
@@ -64,7 +79,7 @@ export function ExportPanel() {
             <Label>Resolution</Label>
             <Select
               value={settings.resolution}
-              onValueChange={(value: any) => setSettings({ ...settings, resolution: value })}
+              onValueChange={(value: ExportSettings['resolution'] | null) => value && setSettings({ ...settings, resolution: value })}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -95,46 +110,29 @@ export function ExportPanel() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Format</Label>
-            <Select
-              value={settings.format}
-              onValueChange={(value: any) => setSettings({ ...settings, format: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="mp4">MP4 (H.264)</SelectItem>
-                <SelectItem value="webm">WebM</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Quality</Label>
-            <Select
-              value={settings.quality}
-              onValueChange={(value: any) => setSettings({ ...settings, quality: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Low (Fast)</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="maximum">Maximum (Slow)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-2">
+          <Label>Quality</Label>
+          <Select
+            value={settings.quality}
+            onValueChange={(value: ExportSettings['quality'] | null) => value && setSettings({ ...settings, quality: value })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">Low (Fast)</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="maximum">Maximum (Slow)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {isExporting && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Exporting...{exportProgress}%</span>
+              <span>{phaseLabel}</span>
+              <span>{exportProgress}%</span>
             </div>
             <Progress value={exportProgress} />
           </div>
